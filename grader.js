@@ -62,23 +62,6 @@ var checkHtml = function(html, checksfile) {
     return out;
 };
 
-var checkUrl = function(url, checksfile) {
-	
-	restler.get(url).on('complete', function(result) {
-		
-        if (result instanceof Error) {
-        	
-    		console.log('Url error: %s. Exiting.', result.message);
-    		process.exit(1);
-        } 
-        else {
-        	
-        	var html = cheerio.load(result);
-        	return checkHtml(html, checksfile);
-        }
-	});
-}
-
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -95,20 +78,35 @@ if(require.main == module) {
     
     if (program.url) {
     	
-		var checkJson = checkUrl(program.url, program.checks);		
+		restler.get(program.url).on('complete', function(result) {
+
+	        if (result instanceof Error) {
+	        	
+	    		console.log('Url error: %s. Exiting.', result.message);
+	    		process.exit(1);
+	        } 
+	        else {
+
+	        	var html = cheerio.load(result);
+	        	var checkJson = checkHtml(html, program.checks);
+	            var outJson = JSON.stringify(checkJson, null, 4);
+	            console.log(outJson);	        	
+	        }
+		});
+		
+		
     } 
     else if (program.file) {
     	
         var checkJson = checkHtmlFile(program.file, program.checks);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);        
     }
     else {
     	
 		console.log('No file or file specified', result.message);
 		process.exit(1);
     }
-    
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
 } 
 else {
 	
